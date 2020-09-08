@@ -7,6 +7,10 @@ app.get('/api/*', (req, res) => {
   res.json({ok: true});
 });
 
+app.get('/', (req, res) => {
+  res.send('Hello, world!')
+})
+
 app.listen(PORT, () => console.log(`Listening on port ${PORT}`));
 
 module.exports = {app};
