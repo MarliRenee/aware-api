@@ -179,7 +179,7 @@ describe('Users Endpoints', function() {
         })
     })
 
-    describe.only(`PATCH /api/users/:user_id`, () => {
+    describe(`PATCH /api/users/:user_id`, () => {
         context(`Given no users`, () => {
             it(`responds with 404`, () => {
                 const userId = 123456
