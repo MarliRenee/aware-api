@@ -1,1 +1,1 @@
-DROP TABLE IF EXISTS iceberg;
+DROP TABLE IF EXISTS icebergs;

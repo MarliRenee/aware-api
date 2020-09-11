@@ -25,7 +25,7 @@ describe('Users Endpoints', function() {
 
     //clean up after each test so the next test has a clean start
     afterEach('cleanup', () => db('aware_users').truncate())
-    //DON'T FORGET TO POPULATE DATABASE WITH 'NPM RUN MIGRATE:TEST'
+    //********DON'T FORGET TO POPULATE DATABASE WITH 'NPM RUN MIGRATE:TEST'
 
     //insert some rows into the aware_users table before the test
     //make a context to describe the app in a state where the db has users

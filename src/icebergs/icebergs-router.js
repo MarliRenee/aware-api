@@ -18,95 +18,95 @@ icebergsRouter
       })
       .catch(next)
   })
-//   .post(jsonParser, (req, res, next) => {
-//     const { username, password } = req.body
-//     const newUser = { username, password }
+
+  .post(jsonParser, (req, res, next) => {
+    const { userid } = req.body
+    const newIceberg = { userid }
 
 
-//     for (const [key, value] of Object.entries(newUser)) {
-//         if (value == null) {
-//             return res.status(400).json({
-//                 error: { message: `Missing '${key}' in request body` }
-//             })
-//         }
-//     }
+    for (const [key, value] of Object.entries(newIceberg)) {
+        if (value == null) {
+            return res.status(400).json({
+                error: { message: `Missing '${key}' in request body` }
+            })
+        }
+    }
 
-//     UsersService.insertUser(
-//       req.app.get('db'),
-//       newUser
-//     )
-//       .then(user => {
-//         res
-//           .status(201)
-//           //POSIX is standardizing Linux and Mac UNIX systems. It's easier to port applications between systems that support POSIX.
-//           .location(path.posix.join(req.originalUrl, `/${user.id}`))
-//           .json(user)
-//       })
-//       .catch(next)
-//   })
+    IcebergsService.insertIceberg(
+      req.app.get('db'),
+      newIceberg
+    )
+      .then(iceberg => {
+        res
+          .status(201)
+          .location(path.posix.join(req.originalUrl, `/${iceberg.id}`))
+          .json(iceberg)
+      })
+      .catch(next)
+  })
 
-// usersRouter
-//     .route('/:iceberg_id')
-//     //i.e. '/icebergs/
+icebergsRouter
+    .route('/:iceberg_id')
 
-//     .all((req, res, next) => {
-//         UsersService.getById(
-//             req.app.get('db'),
-//             req.params.user_id
-//         )
-//             .then(user => {
-//                 if(!user) {
-//                     return res.status(404).json({
-//                         error: { message: `User doesn't exist` }
-//                     })
-//                 }
-//                 res.user = user
-//                 next()
-//             })
-//             .catch(next)
-//     })
+    .all((req, res, next) => {
+        IcebergsService.getById(
+            req.app.get('db'),
+            req.params.iceberg_id
+        )
+            .then(iceberg => {
+                if(!iceberg) {
+                    return res.status(404).json({
+                        error: { message: `Iceberg doesn't exist` }
+                    })
+                }
+                res.iceberg = iceberg
+                next()
+            })
+            .catch(next)
+    })
 
-//     .get((req, res, next) => {
-//         res.json({
-//            id: res.user.id,
-//            username: xss(res.user.username), 
-//            password: xss(res.user.password), 
-//         })
-//     })
-//     .delete((req, res, next) => {
-//         UsersService.deleteUser(
-//             req.app.get('db'),
-//             req.params.user_id
-//         )
-//         .then(() => {
-//             res.status(204).end()
-//         })
-//         .catch(next)
-//     })
+    .get((req, res, next) => {
+        res.json({
+           id: res.iceberg.id,
+           modified: res.iceberg.modified, 
+           userid: res.iceberg.userid, 
+        })
+    })
 
-//     .patch(jsonParser, (req,res, next) => {
-//         const { username, password } = req.body
-//         const userToUpdate = { username, password }
+    .delete((req, res, next) => {
+        IcebergsService.deleteIceberg(
+            req.app.get('db'),
+            req.params.iceberg_id
+        )
+        .then(() => {
+            res.status(204).end()
+        })
+        .catch(next)
+    })
 
-//         const numberOfValues = Object.values(userToUpdate).filter(Boolean).length
-//            if (numberOfValues === 0) {
-//              return res.status(400).json({
-//                error: {
-//                  message: `Request body must contain either 'username' or 'password'`
-//                }
-//              })
-//         }
+    .patch(jsonParser, (req,res, next) => {
+        const { userid } = req.body
+        const icebergToUpdate = { userid }
 
-//         UsersService.updateUser(
-//             req.app.get('db'),
-//             req.params.user_id,
-//             userToUpdate
-//         )
-//             .then(() => {
-//                 res.status(204).end()
-//             })
-//             .catch(next)
-//     })
+        const numberOfValues = Object.values(icebergToUpdate).filter(Boolean).length
+           if (numberOfValues === 0) {
+             return res.status(400).json({
+               error: {
+                 message: `Request body must contain 'userid'`
+               }
+             })
+        }
+
+        IcebergsService.updateIceberg(
+            req.app.get('db'),
+            req.params.iceberg_id,
+            icebergToUpdate
+        )
+            .then(() => {
+                res.status(204).end()
+            })
+            .catch(next)
+    })
 
 
 module.exports = icebergsRouter
