@@ -21,7 +21,7 @@ function makeIcebergsArray() {
             modified: '1919-12-23T00:28:32.615Z'
         },
         
-    ]
+    ] 
 }
 
 module.exports = {

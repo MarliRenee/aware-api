@@ -9,14 +9,13 @@ const {CLIENT_ORIGIN} = require('./config');
 const { PORT, DB_URL } = require('./config')
 const usersRouter = require('./users/users-router')
 const icebergsRouter = require('./icebergs/icebergs-router')
+const responsesRouter = require('./responses/responses-router')
 
 const app = express()
 
-const morganOption = (NODE_ENV === 'production')
-  ? 'tiny'
-  : 'common';
+const morganSetting = process.env.NODE_ENV === 'production' ? 'tiny' : 'common'
+app.use(morgan(morganSetting))
 
-app.use(morgan(morganOption))
 app.use(helmet())
 app.use(
     cors({
@@ -25,21 +24,16 @@ app.use(
 );
 
 app.use('/api/users', usersRouter)
-
 app.use('/api/icebergs', icebergsRouter)
+app.use('/api/responses', responsesRouter)
 
 app.get('/', (req, res) => {
     res.send('Hello, world!')
 })
 
-// app.get('/api/*', (req, res) => {
-//     res.json({ok: true});
-// });
-  
-
 app.use(function errorHandler(error, req, res, next) {
     let response
-    if (NODE_ENV === 'production') {
+    if (process.env.NODE_ENV === 'production') {
         response = { error: { message: 'server error' } }
     } else {
         console.error(error)

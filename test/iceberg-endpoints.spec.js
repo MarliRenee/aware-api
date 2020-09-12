@@ -3,8 +3,9 @@ const knex = require('knex')
 const app = require('../src/app')
 const { makeIcebergsArray } = require('./icebergs.fixtures')
 const supertest = require('supertest')
+const { makeUsersArray } = require('./users.fixtures')
 
-describe.only('Iceberg Endpoints', function() {
+describe('Iceberg Endpoints', function() {
     
     let db
   
@@ -16,16 +17,17 @@ describe.only('Iceberg Endpoints', function() {
     
         app.set('db', db)
     })
-  
-    after('disconnect from db', () => db.destroy())
 
+     after('disconnect from db', () => db.destroy())
+
+  
     before('clean the table', () => 
-        db.raw('TRUNCATE icebergs RESTART IDENTITY CASCADE')
-    );
+        db.raw('TRUNCATE icebergs, aware_users RESTART IDENTITY CASCADE')
+    )
 
     afterEach('cleanup', () => 
-    db.raw('TRUNCATE icebergs RESTART IDENTITY CASCADE')
-    );
+        db.raw('TRUNCATE icebergs, aware_users RESTART IDENTITY CASCADE')
+    )
 
     describe(`GET /api/icebergs`, () => {
 
@@ -40,11 +42,17 @@ describe.only('Iceberg Endpoints', function() {
         context('Given there are icebergs in the database', () => {
             
             const testIcebergs = makeIcebergsArray()
-    
-            beforeEach('insert icebergs', () => {
+            const testUsers = makeUsersArray()
+
+            beforeEach('insert users', () => {
                 return db
-                .into('icebergs')
-                .insert(testIcebergs)
+                .into('aware_users')
+                .insert(testUsers)
+                .then(() => {
+                    return db
+                    .into('icebergs')
+                    .insert(testIcebergs)
+                })
             })
     
             it('GET /api/icebergs responds with 200 and all of the icebergs', () => {
@@ -59,12 +67,18 @@ describe.only('Iceberg Endpoints', function() {
     
     describe(`GET /icebergs/:iceberg_id`, () => {
 
-        const testIcebergs = makeIcebergsArray()
+        const testUsers = makeUsersArray();
+        const testIcebergs = makeIcebergsArray();
 
         beforeEach('insert icebergs', () => {
             return db
-            .into('icebergs')
-            .insert(testIcebergs)
+            .into('aware_users')
+            .insert(testUsers)
+            .then(() => {
+                return db
+                .into('icebergs')
+                .insert(testIcebergs)
+            })
         })
         
         context('Given there are no icebergs in the database', () => {
@@ -90,6 +104,16 @@ describe.only('Iceberg Endpoints', function() {
     })
 
     describe(`POST /api/icebergs`, () => {
+
+        const testUsers = makeUsersArray();
+        const testIceberg = makeIcebergsArray();
+
+        beforeEach('insert related users', () => {
+            return db
+                .into('aware_users')
+                .insert(testUsers)
+        })
+
         it(`creates a iceberg, responding with 201 and the new iceberg`, function() {
             const newIceberg = { 
                 userid: 1 
@@ -107,6 +131,7 @@ describe.only('Iceberg Endpoints', function() {
                     .expect(postRes.body)
                 )
         })
+
 
         //hmm not sure about this. test is passing, but trying to POST a userid that doesn't exist in Postman returns 500 
             // "message": "insert into \"icebergs\" (\"userid\") values ($1) returning * - insert or update on table \"icebergs\" violates foreign key constraint \"iceberg_userid_fkey\"",
@@ -148,12 +173,18 @@ describe.only('Iceberg Endpoints', function() {
         })
 
         context('Given there are icebergs in the database', () => {
-            const testIcebergs = makeIcebergsArray()
-
+            const testUsers = makeUsersArray();
+            const testIcebergs = makeIcebergsArray();
+    
             beforeEach('insert icebergs', () => {
-            return db
-                .into('icebergs')
-                .insert(testIcebergs)
+                return db
+                .into('aware_users')
+                .insert(testUsers)
+                .then(() => {
+                    return db
+                    .into('icebergs')
+                    .insert(testIcebergs)
+                })
             })
 
             it('responds with 204 and removes the iceberg', () => {
@@ -182,12 +213,18 @@ describe.only('Iceberg Endpoints', function() {
         })
 
         context(`Given there are icebergs in the database`, () => {
-            const testIcebergs = makeIcebergsArray()
-
+            const testUsers = makeUsersArray();
+            const testIcebergs = makeIcebergsArray();
+    
             beforeEach('insert icebergs', () => {
                 return db
+                .into('aware_users')
+                .insert(testUsers)
+                .then(() => {
+                    return db
                     .into('icebergs')
                     .insert(testIcebergs)
+                })
             })
 
             it(`responds with 204 and updates the iceberg`, () => {
