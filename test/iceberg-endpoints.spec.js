@@ -12,7 +12,7 @@ describe('Iceberg Endpoints', function() {
     before('make knex instance', () => {
         db = knex({
             client: 'pg',
-            connection: process.env.TEST_DATAASE_URL,
+            connection: process.env.TEST_DATASE_URL,
         })
     
         app.set('db', db)
