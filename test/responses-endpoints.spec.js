@@ -13,7 +13,7 @@ describe('Responses Endpoints', function() {
     before('make knex instance', () => {
         db = knex({
             client: 'pg',
-            connection: process.env.TEST_DB_URL,
+            connection: process.env.TEST_DATABASE_URL,
         })
         app.set('db', db)
     })
@@ -74,8 +74,6 @@ describe('Responses Endpoints', function() {
                 return supertest(app)
                 .get('/api/responses')
                 .expect(200)
-                // TODO: add more assertions about the body
-                //second argumentcan be a response to the body we expect
                 .expect(200, testResponses)
             })
     
