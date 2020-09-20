@@ -10,6 +10,7 @@ const IcebergsService = {
             .returning('*')
             .then(rows => {
                 return rows[0]
+                //originally rows.[0]
             })
     },
 
