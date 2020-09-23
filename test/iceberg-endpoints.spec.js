@@ -15,7 +15,6 @@ describe('Iceberg Endpoints', function() {
             client: 'pg',
             connection: process.env.TEST_DATBASE_URL,
         })
-        console.log(process.env.TEST_DATBASE_URL)
         app.set('db', db)
     })
 

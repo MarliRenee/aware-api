@@ -1,6 +1,6 @@
 const IcebergsService = {
-    getAllIcebergs(knex) {
-        return knex('icebergs').select('*')
+    getAllIcebergs(knex, userId) {
+        return knex('icebergs').select('*').where({userid: userId})
     },
 
     insertIceberg(knex, newIceberg) {

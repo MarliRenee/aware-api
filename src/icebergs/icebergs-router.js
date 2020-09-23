@@ -4,6 +4,7 @@ const xss = require('xss')
 const IcebergsService = require('./icebergs-service')
 const { requireAuth } = require('../middleware/basic-auth')
 
+
 const icebergsRouter = express.Router()
 const jsonParser = express.json()
 
@@ -12,7 +13,8 @@ icebergsRouter
   .all(requireAuth)
   .get((req, res, next) => {
     IcebergsService.getAllIcebergs(
-      req.app.get('db')
+      req.app.get('db'), 
+      req.user.id
     )
       .then(icebergs => {
         res.json(icebergs)
@@ -21,8 +23,8 @@ icebergsRouter
   })
 
   .post(requireAuth, jsonParser, (req, res, next) => {
-    const { userid } = req.body
-    const newIceberg = { userid }
+    // const { userid } = req.body
+    // const newIceberg = { userid }
 
     for (const [key, value] of Object.entries(newIceberg)) {
         if (value == null) {
@@ -31,6 +33,8 @@ icebergsRouter
             })
         }
     }
+
+    newIceberg.user_id = req.user.id
 
     IcebergsService.insertIceberg(
       req.app.get('db'),
@@ -69,7 +73,7 @@ icebergsRouter
       res.json({
           id: res.iceberg.id,
           modified: res.iceberg.modified, 
-          userid: res.iceberg.userid, 
+          // userid: res.iceberg.userid, 
       })
   })
 
