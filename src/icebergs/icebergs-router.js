@@ -2,13 +2,14 @@ const path = require('path')
 const express = require('express')
 const xss = require('xss')
 const IcebergsService = require('./icebergs-service')
+const { requireAuth } = require('../middleware/basic-auth')
 
 const icebergsRouter = express.Router()
 const jsonParser = express.json()
 
 icebergsRouter
   .route('/')
-  //i.e. '/icebergs/
+  .all(requireAuth)
   .get((req, res, next) => {
     IcebergsService.getAllIcebergs(
       req.app.get('db')
@@ -19,10 +20,9 @@ icebergsRouter
       .catch(next)
   })
 
-  .post(jsonParser, (req, res, next) => {
+  .post(requireAuth, jsonParser, (req, res, next) => {
     const { userid } = req.body
     const newIceberg = { userid }
-
 
     for (const [key, value] of Object.entries(newIceberg)) {
         if (value == null) {
@@ -46,67 +46,67 @@ icebergsRouter
   })
 
 icebergsRouter
-    .route('/:iceberg_id')
+  .route('/:iceberg_id')
+  .all(requireAuth)
+  .all((req, res, next) => {
+      IcebergsService.getById(
+          req.app.get('db'),
+          req.params.iceberg_id
+      )
+          .then(iceberg => {
+              if(!iceberg) {
+                  return res.status(404).json({
+                      error: { message: `Iceberg doesn't exist` }
+                  })
+              }
+              res.iceberg = iceberg
+              next()
+          })
+          .catch(next)
+  })
 
-    .all((req, res, next) => {
-        IcebergsService.getById(
-            req.app.get('db'),
-            req.params.iceberg_id
-        )
-            .then(iceberg => {
-                if(!iceberg) {
-                    return res.status(404).json({
-                        error: { message: `Iceberg doesn't exist` }
-                    })
-                }
-                res.iceberg = iceberg
-                next()
-            })
-            .catch(next)
-    })
+  .get((req, res, next) => {
+      res.json({
+          id: res.iceberg.id,
+          modified: res.iceberg.modified, 
+          userid: res.iceberg.userid, 
+      })
+  })
 
-    .get((req, res, next) => {
-        res.json({
-           id: res.iceberg.id,
-           modified: res.iceberg.modified, 
-           userid: res.iceberg.userid, 
+  .delete((req, res, next) => {
+      IcebergsService.deleteIceberg(
+          req.app.get('db'),
+          req.params.iceberg_id
+      )
+      .then(() => {
+          res.status(204).end()
+      })
+      .catch(next)
+  })
+
+  .patch(jsonParser, (req,res, next) => {
+    const { userid } = req.body
+    const icebergToUpdate = { userid }
+
+    const numberOfValues = Object.values(icebergToUpdate).filter(Boolean).length
+      if (numberOfValues === 0) {
+        return res.status(400).json({
+          error: {
+            message: `Request body must contain 'userid'`
+          }
         })
-    })
+    }
 
-    .delete((req, res, next) => {
-        IcebergsService.deleteIceberg(
-            req.app.get('db'),
-            req.params.iceberg_id
-        )
-        .then(() => {
-            res.status(204).end()
-        })
-        .catch(next)
-    })
-
-    .patch(jsonParser, (req,res, next) => {
-        const { userid } = req.body
-        const icebergToUpdate = { userid }
-
-        const numberOfValues = Object.values(icebergToUpdate).filter(Boolean).length
-           if (numberOfValues === 0) {
-             return res.status(400).json({
-               error: {
-                 message: `Request body must contain 'userid'`
-               }
-             })
-        }
-
-        IcebergsService.updateIceberg(
-            req.app.get('db'),
-            req.params.iceberg_id,
-            icebergToUpdate
-        )
-            .then(() => {
-                res.status(204).end()
-            })
-            .catch(next)
-    })
+    IcebergsService.updateIceberg(
+      req.app.get('db'),
+      req.params.iceberg_id,
+      icebergToUpdate
+    )
+      .then(() => {
+          res.status(204).end()
+      })
+      .catch(next)
+  })
 
 
 module.exports = icebergsRouter

@@ -4,6 +4,7 @@ const app = require('../src/app')
 const { makeIcebergsArray } = require('./icebergs.fixtures')
 const supertest = require('supertest')
 const { makeUsersArray } = require('./users.fixtures')
+const { requireAuth } = require('../src/middleware/basic-auth')
 
 describe('Iceberg Endpoints', function() {
     
@@ -12,13 +13,13 @@ describe('Iceberg Endpoints', function() {
     before('make knex instance', () => {
         db = knex({
             client: 'pg',
-            connection: process.env.TEST_DATASE_URL,
+            connection: process.env.TEST_DATBASE_URL,
         })
-    
+        console.log(process.env.TEST_DATBASE_URL)
         app.set('db', db)
     })
 
-     after('disconnect from db', () => db.destroy())
+    after('disconnect from db', () => db.destroy())
 
   
     before('clean the table', () => 
@@ -65,7 +66,7 @@ describe('Iceberg Endpoints', function() {
 
     })
     
-    describe(`GET /icebergs/:iceberg_id`, () => {
+    describe.only(`GET /icebergs/:iceberg_id`, () => {
 
         const testUsers = makeUsersArray();
         const testIcebergs = makeIcebergsArray();
@@ -86,6 +87,7 @@ describe('Iceberg Endpoints', function() {
                 const icebergId = 123456
                 const expectedIceberg = testIcebergs[icebergId - 1]
                 return supertest(app)
+                .all(requireAuth)
                 .get(`/api/icebergs/${icebergId}`)
                 .expect(404, {error: { message: `Iceberg doesn't exist`} })
             })

@@ -5,6 +5,7 @@ const ResponsesService = require('./responses-service')
 
 const responsesRouter = express.Router()
 const jsonParser = express.json()
+const { requireAuth } = require('../middleware/basic-auth')
 
 responsesRouter
   .route('/')
@@ -18,9 +19,9 @@ responsesRouter
       .catch(next)
   })
 
-  .post(jsonParser, (req, res, next) => {
-    const { icebergid, q1, q2, q3, q4, q5, q6, q7, q8 } = req.body
-    const newResponses = { icebergid, q1, q2, q3, q4, q5, q6, q7, q8 }
+  .post(requireAuth, jsonParser, (req, res, next) => {
+    const { userid, icebergid, q1, q2, q3, q4, q5, q6, q7, q8 } = req.body
+    const newResponses = { userid, icebergid, q1, q2, q3, q4, q5, q6, q7, q8 }
 
     for (const [key, value] of Object.entries(newResponses)) {
         if (value == null) {
@@ -66,6 +67,7 @@ responsesRouter
     .get((req, res, next) => {
         res.json({
            id: res.responses.id,
+           userid: res.responses.userid,
            icebergid: res.responses.icebergid, 
            q1: res.responses.q1, 
            q2: res.responses.q2, 
