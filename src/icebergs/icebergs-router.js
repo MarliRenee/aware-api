@@ -17,14 +17,14 @@ icebergsRouter
       req.user.id
     )
       .then(icebergs => {
-        res.json(icebergs)
+        res.json(icebergs) 
       })
       .catch(next)
   })
 
   .post(requireAuth, jsonParser, (req, res, next) => {
-    // const { userid } = req.body
-    // const newIceberg = { userid }
+    // const { icebergid } = req.body
+    const newIceberg = { }
 
     for (const [key, value] of Object.entries(newIceberg)) {
         if (value == null) {
@@ -34,7 +34,7 @@ icebergsRouter
         }
     }
 
-    newIceberg.user_id = req.user.id
+    newIceberg.userid = req.user.id
 
     IcebergsService.insertIceberg(
       req.app.get('db'),
