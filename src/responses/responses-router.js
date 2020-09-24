@@ -20,8 +20,8 @@ responsesRouter
   })
 
   .post(requireAuth, jsonParser, (req, res, next) => {
-    const { userid, icebergid, q1, q2, q3, q4, q5, q6, q7, q8 } = req.body
-    const newResponses = { userid, icebergid, q1, q2, q3, q4, q5, q6, q7, q8 }
+    const { icebergid, q1, q2, q3, q4, q5, q6, q7, q8 } = req.body
+    const newResponses = { icebergid, q1, q2, q3, q4, q5, q6, q7, q8 }
 
     for (const [key, value] of Object.entries(newResponses)) {
         if (value == null) {
