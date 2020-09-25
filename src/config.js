@@ -5,3 +5,5 @@ module.exports = {
     TEST_DATABASE_URL: process.env.TEST_DATABASE_URL || 'postgresql://marliree@localhost/awareapi-test',
     CLIENT_ORIGIN: 'https://aware-app.vercel.app'
 }
+
+// || 'http://localhost:3000'
