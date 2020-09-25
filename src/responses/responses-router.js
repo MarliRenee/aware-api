@@ -9,6 +9,7 @@ const { requireAuth } = require('../middleware/basic-auth')
 
 responsesRouter
   .route('/')
+  .all(requireAuth)
   .get((req, res, next) => {
     ResponsesService.getAllResponses(
       req.app.get('db')
