@@ -23,7 +23,6 @@ icebergsRouter
   })
 
   .post(requireAuth, jsonParser, (req, res, next) => {
-    // const { icebergid } = req.body
     const newIceberg = { }
 
     for (const [key, value] of Object.entries(newIceberg)) {
