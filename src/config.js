@@ -6,4 +6,4 @@ module.exports = {
     CLIENT_ORIGIN: 'https://aware-app.vercel.app'
 }
 
-// || 'http://localhost:3000'
+// || ''http://localhost:3000''
