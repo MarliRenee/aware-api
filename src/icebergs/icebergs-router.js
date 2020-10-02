@@ -10,8 +10,12 @@ const jsonParser = express.json()
 
 icebergsRouter
   .route('/')
+  .all(requireAuth)
   .get((req, res, next) => {
-    IcebergsService.getAllIcebergs(req.app.get('db')) 
+    IcebergsService.getAllIcebergs(
+      req.app.get('db'), 
+      req.user.id
+    )
       .then(icebergs => {
         res.json(icebergs) 
       })
@@ -109,5 +113,3 @@ icebergsRouter
 
 
 module.exports = icebergsRouter
-    
-   
