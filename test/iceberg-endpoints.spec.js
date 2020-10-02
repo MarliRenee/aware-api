@@ -8,18 +8,34 @@ const { requireAuth } = require('../src/middleware/basic-auth')
 
 describe('Iceberg Endpoints', function() {
     
-    let db
+    let db;
+    //IN PROGRESS
+    //let authToken;
+
+    function makeAuthHeader(user) {
+       const token = Buffer.from(`${user.username}:${user.password}`).toString('base64')
+       return `Basic ${token}`
+    }
+        
   
     before('make knex instance', () => {
         db = knex({
             client: 'pg',
-            connection: process.env.TEST_DATBASE_URL,
+            connection: process.env.TEST_DATABASE_URL,
         })
         app.set('db', db)
     })
 
     after('disconnect from db', () => db.destroy())
 
+    //IN PROGRESS
+    // beforeEach('create and login', () => {
+    //     return supertest(app).post('/api/users').send({}).then(res=>{
+    //         return supertest(app).post('/api/auth/login').send({}).then(res2=>{
+    //             authToken = res2.authToken;
+    //         })
+    //     })
+    // })
   
     before('clean the table', () => 
         db.raw('TRUNCATE icebergs, aware_users RESTART IDENTITY CASCADE')
@@ -29,12 +45,39 @@ describe('Iceberg Endpoints', function() {
         db.raw('TRUNCATE icebergs, aware_users RESTART IDENTITY CASCADE')
     )
 
+    describe(`Protected endpoints`, () => {
+        const testUsers = makeUsersArray();
+        const testIcebergs = makeIcebergsArray();
+
+        beforeEach('insert icebergs', () => {
+            return db
+            .into('aware_users')
+            .insert(testUsers)
+            .then(() => {
+                return db
+                .into('icebergs')
+                .insert(testIcebergs)
+            })
+        })
+        
+        describe(`GET /api/icebergs/:iceberg_id`, () => {
+            it(`responds with 401 'Missing basic token' when no basic token`, () => {
+            return supertest(app)
+                .get(`/api/icebergs/123`)
+                .expect(401, { error: `Missing basic token` })
+            })
+        })
+    })
+
     describe(`GET /api/icebergs`, () => {
+
+        const testUsers = makeUsersArray();
 
         context('Given there are no icebergs in the database', () => {
             it(`responds with 200 and an empty list`, () => {
                 return supertest(app)
                 .get('/api/icebergs')
+                .set('Authorization', makeAuthHeader(testUsers[0]))
                 .expect(200, [])
             })
         })
@@ -58,6 +101,8 @@ describe('Iceberg Endpoints', function() {
             it('GET /api/icebergs responds with 200 and all of the icebergs', () => {
                 return supertest(app)
                 .get('/api/icebergs')
+                .set('Authorization', makeAuthHeader(testUsers[0]))
+                .expect(200)
                 .expect(200, testIcebergs)
             })
     
@@ -65,7 +110,7 @@ describe('Iceberg Endpoints', function() {
 
     })
     
-    describe.only(`GET /icebergs/:iceberg_id`, () => {
+    describe(`GET /icebergs/:iceberg_id`, () => {
 
         const testUsers = makeUsersArray();
         const testIcebergs = makeIcebergsArray();
@@ -82,12 +127,13 @@ describe('Iceberg Endpoints', function() {
         })
         
         context('Given there are no icebergs in the database', () => {
+
             it('GET /api/icebergs/:iceberg_id responds with 404', () => {
                 const icebergId = 123456
                 const expectedIceberg = testIcebergs[icebergId - 1]
                 return supertest(app)
-                .all(requireAuth)
                 .get(`/api/icebergs/${icebergId}`)
+                .set('Authorization', makeAuthHeader(testUsers[0]))
                 .expect(404, {error: { message: `Iceberg doesn't exist`} })
             })
         })
@@ -98,6 +144,7 @@ describe('Iceberg Endpoints', function() {
                 const expectedIceberg = testIcebergs[icebergId - 1]
                 return supertest(app)
                 .get(`/api/icebergs/${icebergId}`)
+                .set('Authorization', makeAuthHeader(testUsers[0]))
                 .expect(200, expectedIceberg)
             })
         })
@@ -115,16 +162,17 @@ describe('Iceberg Endpoints', function() {
                 .insert(testUsers)
         })
 
-        it(`creates a iceberg, responding with 201 and the new iceberg`, function() {
+        it(`creates a iceberg, responding with 201 and the new iceberg`, () => {
             const newIceberg = { 
-                userid: 1 
+                userid: 1, 
             }
 
             return supertest(app)
                 .post('/api/icebergs')
-                .send(newIceberg)
+                .set('Authorization', makeAuthHeader(testUsers))
+                .send(testIceberg)
                 .expect(res => {
-                    expect(res.body.userid).to.eql(newIceberg.userid)
+                    expect(res.body.userid).to.eql(newIceberg.userid[0])
                 })
                 .then(postRes =>
                     supertest(app)
@@ -133,136 +181,114 @@ describe('Iceberg Endpoints', function() {
                 )
         })
 
-
-        //hmm not sure about this. test is passing, but trying to POST a userid that doesn't exist in Postman returns 500 
-            // "message": "insert into \"icebergs\" (\"userid\") values ($1) returning * - insert or update on table \"icebergs\" violates foreign key constraint \"iceberg_userid_fkey\"",
-            // "error": {
-            //     "length": 255,
-            //     "name": "error",
-            //     "severity": "ERROR",
-            //     "code": "23503",
-            //     "detail": "Key (userid)=(5) is not present in table \"aware_users\".",
-            //     "schema": "public",
-            //     "table": "icebergs",
-            //     "constraint": "iceberg_userid_fkey",
-            //     "file": "ri_triggers.c",
-            //     "line": "2474",
-            //     "routine": "ri_ReportViolation"
-            // }
-        it(`responds with 400 and an error message when the 'userid' is missing`, () => {
-            return supertest(app)
-            .post('/api/icebergs')
-            .send({
-                userid: null,
-            })
-            .expect(400, {
-                error: { message: `Missing 'userid' in request body` }
-            })
-        })
-
     })
 
-    describe(`DELETE /api/icebergs/:iceberg_id`, () => {
+    //Currently no DELETE functionality client side, considering adding this
+    // describe.only(`DELETE /api/icebergs/:iceberg_id`, () => {
 
-        context(`Given no icebergs`, () => {
-            it(`responds with 404`, () => {
-            const icebergId = 123456
-            return supertest(app)
-                .delete(`/api/icebergs/${icebergId}`)
-                .expect(404, { error: { message: `Iceberg doesn't exist` } })
-            })
-        })
+    //     context(`Given no icebergs`, () => {
+    //         it(`responds with 404`, () => {
+    //         const icebergId = 123456
+    //         return supertest(app)
+    //             .delete(`/api/icebergs/${icebergId}`)
+    //             .expect(404, { error: { message: `Iceberg doesn't exist` } })
+    //         })
+    //     })
 
-        context('Given there are icebergs in the database', () => {
-            const testUsers = makeUsersArray();
-            const testIcebergs = makeIcebergsArray();
+    //     context('Given there are icebergs in the database', () => {
+    //         const testUser = makeUsersArray();
+    //         const testIcebergs = makeIcebergsArray();
     
-            beforeEach('insert icebergs', () => {
-                return db
-                .into('aware_users')
-                .insert(testUsers)
-                .then(() => {
-                    return db
-                    .into('icebergs')
-                    .insert(testIcebergs)
-                })
-            })
+    //         beforeEach('insert icebergs', () => {
+    //             return db
+    //             .into('aware_users')
+    //             .insert(testUser)
+    //             .then(() => {
+    //                 return db
+    //                 .into('icebergs')
+    //                 .insert(testIcebergs)
+    //             })
+    //         })
 
-            it('responds with 204 and removes the iceberg', () => {
-                const idToRemove = 2
-                const expectedIcebergs = testIcebergs.filter(iceberg => iceberg.id !== idToRemove)
-                return supertest(app)
-                    .delete(`/api/icebergs/${idToRemove}`)
-                    .expect(204)
-                    .then(res =>
-                    supertest(app)
-                        .get(`/api/icebergs`)
-                        .expect(expectedIcebergs)
-                    )
-            })
-        })
-    })
+    //         it('responds with 204 and removes the iceberg', () => {
+    //             const idToRemove = 2
+    //             const expectedIcebergs = testIcebergs.filter(iceberg => iceberg.id !== idToRemove)
+    //             return supertest(app)
+    //                 .delete(`/api/icebergs/${idToRemove}`)
+    //                 .set('Authorization', makeAuthHeader(testUser))
+    //                 .expect(204)
+    //                 .then(res =>
+    //                 supertest(app)
+    //                     .get(`/api/icebergs`)
+    //                     .expect(expectedIcebergs)
+    //                 )
+    //         })
+    //     })
+    // })
 
-    describe(`PATCH /api/icebergs/:iceberg_id`, () => {
-        context(`Given no icebergs`, () => {
-            it(`responds with 404`, () => {
-                const icebergId = 123456
-                return supertest(app)
-                    .patch(`/api/icebergs/${icebergId}`)
-                    .expect(404, { error: { message: `Iceberg doesn't exist`} })
-            })
-        })
+    //Currently no PATCH functionality on client-side, considering adding this:
+    // describe.only(`PATCH /api/icebergs/:iceberg_id`, () => {
+    //     context(`Given no icebergs`, () => {
+    //         it(`responds with 404`, () => {
+    //             const icebergId = 123456
+    //             return supertest(app)
+    //                 .patch(`/api/icebergs/${icebergId}`)
+    //                 .expect(404, { error: { message: `Iceberg doesn't exist`} })
+    //         })
+    //     })
 
-        context(`Given there are icebergs in the database`, () => {
-            const testUsers = makeUsersArray();
-            const testIcebergs = makeIcebergsArray();
+    //     context(`Given there are icebergs in the database`, () => {
+    //         const testUsers = makeUsersArray();
+    //         const testIcebergs = makeIcebergsArray();
     
-            beforeEach('insert icebergs', () => {
-                return db
-                .into('aware_users')
-                .insert(testUsers)
-                .then(() => {
-                    return db
-                    .into('icebergs')
-                    .insert(testIcebergs)
-                })
-            })
+    //         beforeEach('insert icebergs', () => {
+    //             return db
+    //             .into('aware_users')
+    //             .insert(testUsers)
+    //             .then(() => {
+    //                 return db
+    //                 .into('icebergs')
+    //                 .insert(testIcebergs)
+    //             })
+    //         })
 
-            it(`responds with 204 and updates the iceberg`, () => {
-                const idToUpdate = 2
+    //         it(`responds with 204 and updates the iceberg`, () => {
+    //             const idToUpdate = 2
 
-                const updateIcebergs = {
-                    userid: 1,
-                }
-                const expectedIceberg = {
-                    ...testIcebergs[idToUpdate - 1],
-                    ...updateIcebergs
-                }
+    //             const updateIcebergs = {
+    //                 userid: 1,
+    //             }
+    //             const expectedIceberg = {
+    //                 ...testIcebergs[idToUpdate - 1],
+    //                 ...updateIcebergs
+    //             }
 
-                return supertest(app)
-                    .patch(`/api/icebergs/${idToUpdate}`)
-                    .send(updateIcebergs)
-                    .expect(204)
-                    .then(res =>
-                        supertest(app)
-                            .get(`/api/icebergs/${idToUpdate}`)
-                            .expect(expectedIceberg)                            
-                    )
-            })
+    //             return supertest(app)
+    //                 .patch(`/api/icebergs/${idToUpdate}`)
+    //                 .set('Authorization', makeAuthHeader(testUsers[0]))
+    //                 .send(updateIcebergs)
+    //                 .expect(204)
+    //                 .then(res =>
+    //                     supertest(app)
+    //                         .get(`/api/icebergs/${idToUpdate}`)
+    //                         .expect(expectedIceberg)                            
+    //                 )
+    //         })
 
-            it(`responds with 400 when no required fields supplied`, () => {
-                const idToUpdate = 2
-                return supertest(app)
-                .patch(`/api/icebergs/${idToUpdate}`)
-                .send({ irrelevantField: 'foo' })
-                .expect(400, {
-                    error: {
-                    message: `Request body must contain 'userid'`
-                    }
-                })
-            })
+    //         it(`responds with 400 when no required fields supplied`, () => {
+    //             const idToUpdate = 2
+    //             return supertest(app)
+    //             .patch(`/api/icebergs/${idToUpdate}`)
+    //             .set('Authorization', makeAuthHeader(testUsers[0]))
+    //             .send({ irrelevantField: 'foo' })
+    //             .expect(400, {
+    //                 error: {
+    //                 message: `Request body must contain 'userid'`
+    //                 }
+    //             })
+    //         })
 
-        })
-    })
+    //     })
+    // })
 
 })

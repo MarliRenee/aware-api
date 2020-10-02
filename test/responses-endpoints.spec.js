@@ -5,10 +5,16 @@ const { makeUsersArray } = require('./users.fixtures')
 const { makeIcebergsArray } = require('./icebergs.fixtures')
 const { makeResponsesArray } = require('./responses.fixtures')
 const supertest = require('supertest')
+const { requireAuth } = require('../src/middleware/basic-auth')
 
 describe('Responses Endpoints', function() {
     
     let db
+
+    function makeAuthHeader(user) {
+        const token = Buffer.from(`${user.username}:${user.password}`).toString('base64')
+        return `Basic ${token}`
+    }
   
     before('make knex instance', () => {
         db = knex({
@@ -38,46 +44,37 @@ describe('Responses Endpoints', function() {
     // );
 
     describe(`GET /api/responses`, () => {
+     
+        const testResponses = makeResponsesArray()
+        const testIcebergs = makeIcebergsArray()
+        const testUsers = makeUsersArray()
 
-        context('Given there are no responses in the database', () => {
-            it(`responds with 200 and an empty list`, () => {
-                return supertest(app)
-                .get('/api/responses')
-                .expect(200, [])
-            })
-        })
-
-        context('Given there are responses in the database', () => {
-
-            const testResponses = makeResponsesArray()
-            const testIcebergs = makeIcebergsArray()
-            const testUsers = makeUsersArray()
-
-            beforeEach('insert responses', () => {
+        beforeEach('insert responses', () => {
+            return db
+            .into('aware_users')
+            .insert(testUsers)
+            .then(() => {
                 return db
-                .into('aware_users')
-                .insert(testUsers)
+                .into('icebergs')
+                .insert(testIcebergs)
                 .then(() => {
                     return db
-                    .into('icebergs')
-                    .insert(testIcebergs)
-                    .then(() => {
-                        return db
-                        .into('iceberg_responses')
-                        .insert(testResponses)
-                    })
+                    .into('iceberg_responses')
+                    .insert(testResponses)
                 })
             })
-    
-    
-            it('GET /api/responses responds with 200 and all of the responses', () => {
-                return supertest(app)
-                .get('/api/responses')
-                .expect(200)
-                .expect(200, testResponses)
-            })
-    
         })
+
+
+        it('GET /api/responses responds with 200 and all of the responses', () => {
+            return supertest(app)
+            .get('/api/responses')
+            .set('Authorization', makeAuthHeader(testUsers[0]))
+            .expect(200)
+            .expect(200, testResponses)
+        })
+    
+
 
     })
     
@@ -168,6 +165,7 @@ describe('Responses Endpoints', function() {
             }
             return supertest(app)
                 .post('/api/responses')
+                .set('Authorization', makeAuthHeader(testUsers[0]))
                 .send(newResponses)
                 .expect(res => {
                     expect(res.body.icebergid).to.eql(newResponses.icebergid)
@@ -184,6 +182,7 @@ describe('Responses Endpoints', function() {
                 .then(postRes =>
                     supertest(app)
                     .get(`/api/responses/${postRes.body.id}`)
+                    .set('Authorization', makeAuthHeader(testUsers))
                     .expect(postRes.body)
                 )
         })
@@ -208,6 +207,7 @@ describe('Responses Endpoints', function() {
 
                 return supertest(app)
                 .post('/api/responses')
+                .set('Authorization', makeAuthHeader(testUsers[0]))
                 .send(newResponses)
                 .expect(400, {
                     error: { 
@@ -258,6 +258,7 @@ describe('Responses Endpoints', function() {
                     .then(res =>
                     supertest(app)
                         .get(`/api/responses`)
+                        .set('Authorization', makeAuthHeader(testUsers[0]))
                         .expect(expectedResponses)
                     )
             })

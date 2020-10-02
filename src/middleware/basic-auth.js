@@ -22,7 +22,7 @@ function requireAuth(req, res, next) {
         .first()
         .then(user => {
             if (!user || user.password !== tokenPassword) {
-                return res.status(401).json({ error: 'Unauthorized request, wrong username or password' })
+                return res.status(401).json({ error: 'Missing basic token' })
             }
             req.user = user
             next()

@@ -10,12 +10,8 @@ const jsonParser = express.json()
 
 icebergsRouter
   .route('/')
-  .all(requireAuth)
   .get((req, res, next) => {
-    IcebergsService.getAllIcebergs(
-      req.app.get('db'), 
-      req.user.id
-    )
+    IcebergsService.getAllIcebergs(req.app.get('db')) 
       .then(icebergs => {
         res.json(icebergs) 
       })
@@ -72,7 +68,7 @@ icebergsRouter
       res.json({
           id: res.iceberg.id,
           modified: res.iceberg.modified, 
-          // userid: res.iceberg.userid, 
+          userid: res.iceberg.userid, 
       })
   })
 
