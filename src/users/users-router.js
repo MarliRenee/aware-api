@@ -37,7 +37,6 @@ usersRouter
       .then(user => {
         res
           .status(201)
-          //POSIX is standardizing Linux and Mac UNIX systems. It's easier to port applications between systems that support POSIX.
           .location(path.posix.join(req.originalUrl, `/${user.id}`))
           .json(user)
       })

@@ -73,8 +73,6 @@ describe('Responses Endpoints', function() {
             .expect(200)
             .expect(200, testResponses)
         })
-    
-
 
     })
     

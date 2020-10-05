@@ -70,43 +70,29 @@ describe('Iceberg Endpoints', function() {
     })
 
     describe(`GET /api/icebergs`, () => {
-
-        const testUsers = makeUsersArray();
-
-        context('Given there are no icebergs in the database', () => {
-            it(`responds with 200 and an empty list`, () => {
-                return supertest(app)
-                .get('/api/icebergs')
-                .set('Authorization', makeAuthHeader(testUsers[0]))
-                .expect(200, [])
-            })
-        })
-
-        context('Given there are icebergs in the database', () => {
             
-            const testIcebergs = makeIcebergsArray()
-            const testUsers = makeUsersArray()
+        const testIcebergs = makeIcebergsArray()
+        const testUsers = makeUsersArray()
 
-            beforeEach('insert users', () => {
+        beforeEach('insert users', () => {
+            return db
+            .into('aware_users')
+            .insert(testUsers)
+            .then(() => {
                 return db
-                .into('aware_users')
-                .insert(testUsers)
-                .then(() => {
-                    return db
-                    .into('icebergs')
-                    .insert(testIcebergs)
-                })
+                .into('icebergs')
+                .insert(testIcebergs)
             })
-    
-            it('GET /api/icebergs responds with 200 and all of the icebergs', () => {
-                return supertest(app)
-                .get('/api/icebergs')
-                .set('Authorization', makeAuthHeader(testUsers[0]))
-                .expect(200)
-                .expect(200, testIcebergs)
-            })
-    
         })
+
+        it('GET /api/icebergs responds with 200 and all of the icebergs', () => {
+            return supertest(app)
+            .get('/api/icebergs')
+            .set('Authorization', makeAuthHeader(testUsers[0]))
+            .expect(200)
+            .expect(200, testIcebergs)
+        })
+    
 
     })
     
