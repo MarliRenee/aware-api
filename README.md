@@ -16,6 +16,20 @@ You can run through a quick "iceberg" processing flow without signing-in, or reg
 
 Aware is a eight-step processing tool designed to help people articulate the emotions behind stressful or unusual events. Satir's iceberg model has been used by CBT therapists for decades, but now users can independentally work through the questions, save completed processing "icebergs" for later referal, and ditch cluttered homework sheets. And save trees! 
 
+## Endpoints
+
+### Method:
+<The request type>
+
+GET | POST | DELETE | PATCH
+
+- `/icebergs`
+- `/icebergs/:iceberg_id`:
+- `/responses`
+- `/responses/:response_id`
+- `/users`
+- `/users/:user_id`
+
 ## Technology
 <b>Back End</b>
 - Node and Express
@@ -37,6 +51,8 @@ Aware is a eight-step processing tool designed to help people articulate the emo
 ![Login Page](https://github.com/MarliRenee/aware-app/blob/styling/src/Assets/Login.PNG?raw=true)
 ![Iceberg Page](https://github.com/MarliRenee/aware-app/blob/styling/src/Assets/IcebergSample.PNG?raw=true)
 ![Iceberg Question](https://github.com/MarliRenee/aware-app/blob/styling/src/Assets/QuestionSample.jpg?raw=true)
+
+
 
 ## Set up
 
